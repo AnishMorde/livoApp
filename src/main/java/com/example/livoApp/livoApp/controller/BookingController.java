@@ -23,8 +23,8 @@ public class BookingController {
 
     @PostMapping("/{bookingId}/addGuests")
     public ResponseEntity<BookingDto> addGuests(@PathVariable Long bookingId ,
-            @RequestBody List<GuestDto> guestDtos){
-        return  ResponseEntity.ok(bookingService.addGuests(bookingId , guestDtos));
+            @RequestBody List<GuestDto> guestDtoList){
+        return  ResponseEntity.ok(bookingService.addGuests(bookingId , guestDtoList));
     }
 
 

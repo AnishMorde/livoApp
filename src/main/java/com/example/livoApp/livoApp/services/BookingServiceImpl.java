@@ -6,10 +6,7 @@ import com.example.livoApp.livoApp.dto.GuestDto;
 import com.example.livoApp.livoApp.entity.*;
 import com.example.livoApp.livoApp.entity.enums.BookingStatus;
 import com.example.livoApp.livoApp.exception.ResourceNotFoundException;
-import com.example.livoApp.livoApp.repository.BookingRepo;
-import com.example.livoApp.livoApp.repository.HotelRepo;
-import com.example.livoApp.livoApp.repository.InvetoryRepo;
-import com.example.livoApp.livoApp.repository.RoomRepo;
+import com.example.livoApp.livoApp.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -17,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -29,6 +27,7 @@ public class BookingServiceImpl implements BookingService {
     private final RoomRepo roomRepo;
     private final InvetoryRepo invetoryRepo;
     private final ModelMapper modelMapper;
+    private final GuestRepo guestRepo;
 
     @Override
     @Transactional
@@ -81,7 +80,35 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtos) {
-        return null;
+    public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtoList) {
+        Booking booking = bookingRepo.findById(bookingId).orElseThrow(()->new ResourceNotFoundException("Booking not found with is" + bookingId));
+        if(hasBookingExpired(booking)){
+            throw new IllegalStateException("Booking is already expired");
+        }
+
+        if(booking.getBookStatus() != BookingStatus.RESERVED){
+            throw new IllegalStateException("Booking is not under reserved state , cannot add guests");
+        }
+
+        for(GuestDto guestDto : guestDtoList){
+            Guest guest = modelMapper.map(guestDto , Guest.class);
+            guest.setUser(getCurrentUser());
+            guest = guestRepo.save(guest);
+            booking.getGuests().add(guest);
+        }
+
+        booking.setBookStatus(BookingStatus.GUEST_ADDED);
+       booking = bookingRepo.save(booking);
+        return modelMapper.map(booking , BookingDto.class);
+    }
+
+    private User getCurrentUser() {
+        User user = new User();
+        user.setId(1L);
+        return user;// TODO REMOVE THE DUMMY USER
+    }
+
+    public boolean hasBookingExpired(Booking booking){
+        return booking.getCreatedAt().plusMinutes(10).isBefore(LocalDateTime.now());
     }
 }

@@ -56,8 +56,9 @@ public class Booking {
 
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "book_status")
     private BookingStatus bookStatus;
+
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

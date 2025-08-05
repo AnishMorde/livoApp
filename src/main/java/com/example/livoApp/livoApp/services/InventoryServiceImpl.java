@@ -39,6 +39,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .price(room.getBasePrice())
                     .surgeFactor(BigDecimal.ONE)
                     .totalCount(room.getTotalCount())
+                    .reservedCount(0)
                     .closed(false)
                     .build();
 
