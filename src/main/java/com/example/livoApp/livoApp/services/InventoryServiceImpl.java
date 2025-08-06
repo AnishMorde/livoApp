@@ -1,10 +1,13 @@
 package com.example.livoApp.livoApp.services;
 
+import com.example.livoApp.livoApp.dto.HotelPriceDto;
 import com.example.livoApp.livoApp.dto.HotelSearchDto;
 import com.example.livoApp.livoApp.dto.Hoteldto;
 import com.example.livoApp.livoApp.entity.Hotel;
+import com.example.livoApp.livoApp.entity.HotelMinPrice;
 import com.example.livoApp.livoApp.entity.Inventory;
 import com.example.livoApp.livoApp.entity.Room;
+import com.example.livoApp.livoApp.repository.HotelMinPriceRepo;
 import com.example.livoApp.livoApp.repository.InvetoryRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +27,7 @@ import java.time.temporal.ChronoUnit;
 public class InventoryServiceImpl implements InventoryService {
     private final InvetoryRepo invetoryRepo;
     private final ModelMapper modelMapper;
-
+    private final HotelMinPriceRepo hotelMinPriceRepo;
     @Override
     public void initializeRoomForAYear(Room room) {
         LocalDate today = LocalDate.now();
@@ -53,7 +56,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public Page<Hoteldto> searchHotel(HotelSearchDto hotelSearchDto) {
+    public Page<HotelPriceDto> searchHotel(HotelSearchDto hotelSearchDto) {
         // Validate input dates
         if (hotelSearchDto.getCheckInDate() == null || hotelSearchDto.getEndDate() == null
                 || hotelSearchDto.getCheckInDate().isAfter(hotelSearchDto.getEndDate())) {
@@ -66,15 +69,13 @@ public class InventoryServiceImpl implements InventoryService {
         Pageable pageable = PageRequest.of(hotelSearchDto.getPage(), hotelSearchDto.getSize());
         long dateCount = ChronoUnit.DAYS.between(hotelSearchDto.getCheckInDate(), hotelSearchDto.getEndDate()) + 1;
 
-        Page<Hotel> hotelPage = invetoryRepo.findHotelsWithAvailableInventory(
+        Page<HotelPriceDto> hotelPage = hotelMinPriceRepo.findHotelsWithAvailableInventory(
                 hotelSearchDto.getCity(),
                 hotelSearchDto.getCheckInDate(),
                 hotelSearchDto.getEndDate(),
-                hotelSearchDto.getRoomsCount(),
-                dateCount,
                 pageable
         );
 
-        return hotelPage.map(element -> modelMapper.map(element, Hoteldto.class));
+        return hotelPage;
     }
 }

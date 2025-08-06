@@ -1,6 +1,7 @@
 package com.example.livoApp.livoApp.controller;
 
 import com.example.livoApp.livoApp.dto.HotelInfoDto;
+import com.example.livoApp.livoApp.dto.HotelPriceDto;
 import com.example.livoApp.livoApp.dto.HotelSearchDto;
 import com.example.livoApp.livoApp.dto.Hoteldto;
 import com.example.livoApp.livoApp.services.HotelService;
@@ -22,8 +23,8 @@ public class HotelBrowseCotroller {
     private final HotelService hotelService;
 
     @GetMapping("/search")
-    public ResponseEntity<Page<Hoteldto>> searchHotel(@RequestBody HotelSearchDto hotelSearchDto){
-       Page<Hoteldto> page  = inventoryService.searchHotel(hotelSearchDto);
+    public ResponseEntity<Page<HotelPriceDto>> searchHotel(@RequestBody HotelSearchDto hotelSearchDto){
+       var page  = inventoryService.searchHotel(hotelSearchDto);
        return ResponseEntity.ok(page);
     }
 
