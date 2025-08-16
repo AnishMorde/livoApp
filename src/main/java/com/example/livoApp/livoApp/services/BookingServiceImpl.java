@@ -6,10 +6,12 @@ import com.example.livoApp.livoApp.dto.GuestDto;
 import com.example.livoApp.livoApp.entity.*;
 import com.example.livoApp.livoApp.entity.enums.BookingStatus;
 import com.example.livoApp.livoApp.exception.ResourceNotFoundException;
+import com.example.livoApp.livoApp.exception.UnAuthorisedException;
 import com.example.livoApp.livoApp.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +36,11 @@ public class BookingServiceImpl implements BookingService {
     public BookingDto initialiseBooking(BookingRequest bookingRequest) {
         Hotel hotel = hotelRepo.findById(bookingRequest.getHotelId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Hotel not found with this id " + bookingRequest.getHotelId()));
+                        new ResourceNotFoundException(STR."Hotel not found with this id \{bookingRequest.getHotelId()}"));
 
         Room room = roomRepo.findById(bookingRequest.getRoomId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Room not found with this id " + bookingRequest.getRoomId()));
+                        new ResourceNotFoundException(STR."Room not found with this id \{bookingRequest.getRoomId()}"));
 
         List<Inventory> inventoryList = invetoryRepo.findAndAvailableInventory(
                 bookingRequest.getRoomId(),
@@ -59,10 +61,7 @@ public class BookingServiceImpl implements BookingService {
 
         invetoryRepo.saveAll(inventoryList);
 
-        User user = new User();
-        user.setId(1L); // TODO REMOVE THE DUMMY USER
 
-        // TODO: calculate the dynamic pricing
 
         Booking booking = Booking.builder()
                 .bookStatus(BookingStatus.RESERVED)
@@ -70,7 +69,7 @@ public class BookingServiceImpl implements BookingService {
                 .room(room)
                 .checkInDate(bookingRequest.getCheckInDate().atStartOfDay()) // Convert LocalDate to LocalDateTime
                 .checkOutDate(bookingRequest.getEndDate().atStartOfDay())   // Convert LocalDate to LocalDateTime
-                .user(user)
+                .user(getCurrentUser())
                 .amount(BigDecimal.TEN)
                 .roomsCount(bookingRequest.getRoomsCount())
                 .build();
@@ -81,7 +80,13 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto addGuests(Long bookingId, List<GuestDto> guestDtoList) {
-        Booking booking = bookingRepo.findById(bookingId).orElseThrow(()->new ResourceNotFoundException("Booking not found with is" + bookingId));
+        Booking booking = bookingRepo.findById(bookingId)
+                .orElseThrow(()->new ResourceNotFoundException(STR."Booking not found with is\{bookingId}"));
+
+        User user = getCurrentUser();
+        if( !user.equals(booking.getUser())){
+            throw new UnAuthorisedException(STR."Booking does not belong to this user : \{user.getId()}");
+        }
         if(hasBookingExpired(booking)){
             throw new IllegalStateException("Booking is already expired");
         }
@@ -92,7 +97,7 @@ public class BookingServiceImpl implements BookingService {
 
         for(GuestDto guestDto : guestDtoList){
             Guest guest = modelMapper.map(guestDto , Guest.class);
-            guest.setUser(getCurrentUser());
+            guest.setUser(user);
             guest = guestRepo.save(guest);
             booking.getGuests().add(guest);
         }
@@ -103,9 +108,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private User getCurrentUser() {
-        User user = new User();
-        user.setId(1L);
-        return user;// TODO REMOVE THE DUMMY USER
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     public boolean hasBookingExpired(Booking booking){

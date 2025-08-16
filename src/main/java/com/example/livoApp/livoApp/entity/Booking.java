@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity
@@ -31,9 +32,10 @@ public class Booking {
     private Room room;
 
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "user_id" ,nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
 
     @Column(nullable = false)
     private Integer roomsCount;
@@ -67,5 +69,6 @@ public class Booking {
             inverseJoinColumns =  @JoinColumn(name = "guest_id")
     )
     private Set<Guest>guests;
+
 
 }

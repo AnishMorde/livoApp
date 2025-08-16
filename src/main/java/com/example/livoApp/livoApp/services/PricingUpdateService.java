@@ -33,7 +33,7 @@ public class PricingUpdateService {
     private final PricingService pricingService;
     //scheduler to update the inventory and hotelMin price tables in every hour
 
-    @Scheduled(cron = "*/5 * * * * *")
+    @Scheduled(cron = "0 0 * * * *")
     public void upadatePrice(){
         int page = 0;
         int batchSize = 100;

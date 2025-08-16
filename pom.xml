@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.1.5</version> <!-- or keep 3.5.0 if you're on Spring milestone builds -->
+		<version>3.1.5</version>
 		<relativePath/>
 	</parent>
 
@@ -22,21 +22,37 @@
 	</properties>
 
 	<dependencies>
-		<!-- Spring Boot -->
+		<!-- Spring Boot Starters -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
-		<!-- ModelMapper -->
+		<!-- JWT Dependencies -->
 		<dependency>
-			<groupId>org.modelmapper</groupId>
-			<artifactId>modelmapper</artifactId>
-			<version>3.2.3</version>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>0.12.6</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>0.12.6</version>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!-- PostgreSQL -->
@@ -44,6 +60,13 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<scope>runtime</scope>
+		</dependency>
+
+		<!-- ModelMapper -->
+		<dependency>
+			<groupId>org.modelmapper</groupId>
+			<artifactId>modelmapper</artifactId>
+			<version>3.2.3</version>
 		</dependency>
 
 		<!-- Lombok -->
@@ -64,7 +87,7 @@
 
 	<build>
 		<plugins>
-			<!-- Compiler plugin with Lombok processor -->
+			<!-- Compiler Plugin -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -72,6 +95,9 @@
 				<configuration>
 					<source>21</source>
 					<target>21</target>
+					<compilerArgs>
+						<arg>--enable-preview</arg>
+					</compilerArgs>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
@@ -79,14 +105,23 @@
 							<version>1.18.38</version>
 						</path>
 					</annotationProcessorPaths>
-					<compilerArgs>--enable-preview</compilerArgs>
 				</configuration>
 			</plugin>
 
-			<!-- Spring Boot plugin -->
+			<!-- Spring Boot Plugin -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- Surefire Plugin (to fix your error) -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<argLine>--enable-preview</argLine>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
