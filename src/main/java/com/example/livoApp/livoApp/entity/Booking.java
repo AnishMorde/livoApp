@@ -8,6 +8,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
@@ -45,10 +46,10 @@ public class Booking {
 
 
     @Column(nullable = false)
-    private LocalDateTime checkInDate;
+    private LocalDate checkInDate;
 
     @Column(nullable = false)
-    private LocalDateTime checkOutDate;
+    private LocalDate checkOutDate;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -69,6 +70,9 @@ public class Booking {
             inverseJoinColumns =  @JoinColumn(name = "guest_id")
     )
     private Set<Guest>guests;
+
+    @Column(unique = true)
+    private String stripeSessionId;
 
 
 }
