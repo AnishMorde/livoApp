@@ -40,6 +40,7 @@ public class BookingServiceImpl implements BookingService {
     private final GuestRepo guestRepo;
     private final CheckOutService checkOutService;
     private final PricingService pricingService;
+    private final  EmailService emailService;
 
     @Value("${frontend.url}")
     private String frontEndUrl;
@@ -153,30 +154,70 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public void capturePayment(Event event) {
-        if("checkout.session.completed".equals(event.getType())){
-            Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
-
-            if(session == null) return;
+        if ("checkout.session.completed".equals(event.getType())) {
+            try {
+                Session session = (Session) event.getDataObjectDeserializer().getObject().orElse(null);
+                if (session == null) return;
 
                 String sessionId = session.getId();
-                Booking booking = bookingRepo.findByStripeSessionId(sessionId).orElseThrow(()->new ResourceNotFoundException(STR."Booking Not found for the session id \{sessionId}"));
+                Booking booking = bookingRepo.findByStripeSessionId(sessionId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                STR."Booking Not found for the session id \{sessionId}"));
 
-              booking.setBookStatus(BookingStatus.CONFIRMED);
-              bookingRepo.save(booking);
+                booking.setBookStatus(BookingStatus.CONFIRMED);
+                bookingRepo.save(booking);
 
-              invetoryRepo.findAndLockReservedInventory(booking.getRoom().getId(), booking.getCheckInDate() , booking.getCheckOutDate() , booking.getRoomsCount());
+                invetoryRepo.findAndLockReservedInventory(
+                        booking.getRoom().getId(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        booking.getRoomsCount());
 
-              invetoryRepo.confirmBooking(booking.getRoom().getId(), booking.getCheckInDate() , booking.getCheckOutDate() , booking.getRoomsCount());
+                invetoryRepo.confirmBooking(
+                        booking.getRoom().getId(),
+                        booking.getCheckInDate(),
+                        booking.getCheckOutDate(),
+                        booking.getRoomsCount());
 
-                log.info(STR."Payment successful for booking id \{booking.getId()}");
 
+                try {
+                    User user = booking.getUser();
+                    if (user.getEmail() != null) {
+                        String subject = STR."Booking Confirmed - \{booking.getHotel().getName()}";
 
+                        String body = STR."""
+                            Dear \{user.getName()},
 
+                            🎉 Your booking has been confirmed successfully!
 
+                            📌 Hotel: \{booking.getHotel().getName()}
+                            🏨 Room: \{booking.getRoom().getType()}
+                            🛏️ Total Rooms Booked: \{booking.getRoomsCount()}
+
+                            📅 Check-in: \{booking.getCheckInDate()}
+                            📅 Check-out: \{booking.getCheckOutDate()}
+
+                            💰 Total Amount: ₹\{booking.getAmount()}
+
+                            Thank you for booking with us!
+                            We look forward to hosting you.
+                            """;
+
+                        emailService.sendBookingConfirmation(user.getEmail(), subject, body);
+                        log.info("Booking confirmation email sent to {}", user.getEmail());
+                    } else {
+                        log.warn("User email is null, cannot send booking confirmation.");
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send booking email: {}", e.getMessage(), e);
+                }
+
+            } catch (Exception e) {
+                log.error("Error processing Stripe event {}: {}", event.getId(), e.getMessage(), e);
+            }
         }
-
-
     }
+
 
     @Override
     @Transactional
