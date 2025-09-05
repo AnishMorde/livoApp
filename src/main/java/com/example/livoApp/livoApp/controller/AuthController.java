@@ -1,6 +1,7 @@
 package com.example.livoApp.livoApp.controller;
 
 
+import com.example.livoApp.livoApp.advices.ApiResponse;
 import com.example.livoApp.livoApp.dto.LoginDto;
 import com.example.livoApp.livoApp.dto.LoginResponseDto;
 import com.example.livoApp.livoApp.dto.SignUpRequestDto;
@@ -13,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 
@@ -30,6 +28,12 @@ public class AuthController {
     public ResponseEntity<UserDto> signUp(@RequestBody SignUpRequestDto sign){
         return new ResponseEntity<>(authService.signUp(sign) , HttpStatus.CREATED);
     }
+
+    @GetMapping("/health")
+    public ApiResponse health() {
+        return new ApiResponse("health is ok", "SUCCESS");
+    }
+
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> login(@RequestBody LoginDto loginDto , HttpServletRequest request, HttpServletResponse response){
